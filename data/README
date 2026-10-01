@@ -1,0 +1,17 @@
+# Project Data
+
+Source: [Kaggle — March Machine Learning Mania 2026](https://www.kaggle.com/competitions/march-machine-learning-mania-2026/data)
+
+These datasets will be used to combine regular-season team statistics
+with NCAA tournament seeds and outcomes to study predictors of upsets.
+
+## Files
+
+- **MRegularSeasonDetailedResults.csv:** Regular-season game results
+  and detailed box-score statistics.
+- **MNCAATourneyCompactResults.csv:** NCAA tournament game results,
+  including winning and losing teams and scores.
+- **MNCAATourneySeeds.csv:** Tournament seeds for each team by season.
+- **MTeams.csv:** Team identification numbers and corresponding names.
+
+The CSV files are original downloads and have not been modified.
