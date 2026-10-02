@@ -64,6 +64,8 @@ identified relevant background articles.
 My next step is to combine the datasets and calculate regular-season
 team statistics for use in the analysis.
 
+Link for Milestone 1 video: https://youtu.be/RUV-nK5dAqw
+
 
 
 ## References
