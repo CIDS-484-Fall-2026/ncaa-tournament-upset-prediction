@@ -158,7 +158,7 @@ The next stage of the project will focus on exploratory data analysis. I plan to
 After the exploratory analysis, I will begin developing the logistic regression model used to predict upset probability and evaluate which regular-season statistics are most useful.
 
 Milestone 2 video:
-Link will be added after the Milestone 2 video is completed.
+
 
 References
 
