@@ -1,176 +1,174 @@
-Predicting NCAA Tournament Upsets
+# Predicting NCAA Tournament Upsets
 
 A sports analytics research project examining which regular-season team statistics are most useful for predicting upsets in the NCAA Men’s Basketball Tournament.
 
-Overview
+## Overview
 
-Tournament seeds provide an indication of team strength, but they do not fully explain why upsets occur. This project investigates whether regular-season statistics can help identify teams that are more likely to outperform their tournament seed.
+Tournament seeds provide an indication of team strength, but they do not fully explain why upsets occur. This project investigates whether regular-season statistics can help identify teams likely to outperform their tournament seed.
 
-Research question: Which regular-season team statistics are most useful for predicting upsets in the NCAA Men’s Basketball Tournament?
+**Research Question:** Which regular-season team statistics are most useful for predicting upsets in the NCAA Men’s Basketball Tournament?
 
-For this project, an upset occurs when a team with a larger numerical seed defeats a team with a smaller numerical seed. For example, if a 12 seed defeats a 5 seed, the game is classified as an upset.
+For this project, an upset occurs when a team with a larger numerical seed defeats a team with a smaller numerical seed.
 
-Methods
+## Methods
 
-The project will use NCAA regular-season and tournament data to compare the statistical profiles of tournament opponents.
+The project uses regular-season and NCAA Tournament data beginning with the 2003 season because detailed regular-season statistics are available starting in 2003.
 
-The general process is:
+The analysis process includes:
 
-Clean and combine regular-season results, tournament results, tournament seeds, and team information.
+- Cleaning and combining regular-season results, tournament results, tournament seeds, and team information.
+- Calculating season-level statistics for each team.
+- Creating NCAA Tournament matchups between the favorite and underdog based on tournament seeds.
+- Comparing the regular-season statistical profiles of the two teams in each matchup.
+- Creating predictor variables representing the difference between the underdog and favorite.
+- Using logistic regression to estimate the probability of an upset.
+- Comparing the predictive model with tournament seeds.
+- Evaluating model performance on later seasons.
 
-Calculate season-level statistics for each team.
+## Potential Predictors
 
-Identify the favorite and underdog in each NCAA Tournament matchup based on tournament seed.
+Regular-season statistics being considered include:
 
-Compare regular-season statistics between the underdog and favorite.
+- Winning percentage
+- Average points scored
+- Average field goals attempted
+- Average three-point attempts
+- Average free-throw attempts
+- Average offensive rebounds
+- Average defensive rebounds
+- Average assists
+- Average turnovers
+- Average steals
+- Average blocks
+- Strength of schedule
 
-Use logistic regression to estimate the probability of an upset.
+For tournament matchups, statistical differences are calculated as:
 
-Compare the statistical model with a model based primarily on tournament seeding.
+**Underdog Statistic - Favorite Statistic**
 
-Evaluate the model's predictive performance.
+Therefore, a positive difference means the underdog had a higher value for that statistic during the regular season, while a negative difference means the favorite had the higher value.
 
-Potential Predictors
+The final set of predictors will be determined through exploratory analysis and model evaluation.
 
-Regular-season statistics currently included in the analysis are:
+## Data Source
 
-Winning percentage
+Data comes from Kaggle's March Machine Learning Mania 2026 dataset.
 
-Average points scored
+Files used:
 
-Average points allowed
+- `MRegularSeasonDetailedResults.csv`
+- `MNCAATourneyCompactResults.csv`
+- `MNCAATourneySeeds.csv`
+- `MTeams.csv`
 
-Average scoring margin
+## Project Files
 
-Field-goal percentage
+### `01_data_preparation.R`
 
-Three-point percentage
+This script prepares the regular-season data.
 
-Free-throw percentage
+It:
 
-Rebounds
+- Loads the NCAA datasets.
+- Separates each regular-season game into winner and loser perspectives.
+- Converts the results into team-game observations.
+- Creates statistics for both the team and its opponent.
+- Combines all team-game observations.
+- Calculates season-level statistics for every team.
 
-Assists
+The resulting team-season dataset is saved as:
 
-Turnovers
+`team_season_statistics.csv`
 
-Steals
-
-Blocks
-
-Tournament seed difference
-
-For each tournament matchup, most regular-season predictors are represented as the difference between the underdog's statistic and the favorite's statistic.
-
-Data Source
-
-Data comes from Kaggle's March Machine Learning Mania 2026 competition.
-
-The original files selected for this project are:
-
-MRegularSeasonDetailedResults.csv
-
-MNCAATourneyCompactResults.csv
-
-MNCAATourneySeeds.csv
-
-MTeams.csv
-
-The project also creates two processed datasets:
-
-team_season_statistics.csv
-
-tournament_upset_data.csv
-
-Detailed regular-season statistics are available beginning in 2003, so the primary analysis uses NCAA Tournament games from 2003 onward.
-
-Project Files
-
-01_data_preparation.R
-
-This script prepares the regular-season data for analysis. The original game results store the winning and losing teams separately, so the script restructures the data to create one observation for each team's performance in each game.
-
-It then calculates and summarizes regular-season statistics for every team-season, including winning percentage, scoring margin, shooting percentages, rebounds, assists, turnovers, steals, and blocks.
-
-The resulting dataset is exported as:
-
-team_season_statistics.csv
-
-02_tournament_matchups.R
+### `02_tournament_matchups.R`
 
 This script prepares the NCAA Tournament matchup data.
 
 It:
 
-Adds tournament seeds to each game.
+- Loads tournament results and tournament seeds.
+- Extracts the numerical portion of each tournament seed.
+- Determines the favorite and underdog in each matchup.
+- Identifies whether an upset occurred.
+- Joins regular-season statistics for both teams.
+- Calculates differences between the underdog's and favorite's regular-season statistics.
+- Adds team names to make the dataset easier to interpret.
 
-Removes seasons before 2003 because detailed regular-season statistics are not available.
+The resulting tournament dataset is saved as:
 
-Identifies the favorite and underdog based on tournament seed.
+`tournament_upset_data.csv`
 
-Classifies whether each game resulted in an upset.
+The current dataset contains **1,367 NCAA Tournament matchups from 2003 through 2025**, including:
 
-Adds the regular-season statistics created in Script 01.
+- **392 upsets**
+- **975 non-upsets**
+- **No missing values**
 
-Calculates the difference between the underdog and favorite for each statistic.
+## Tools
 
-Creates the final dataset that will be used for exploratory analysis and predictive modeling.
+- R and RStudio for data preparation, analysis, and visualization
+- tidyverse for data manipulation
+- GitHub for project documentation and version control
 
-The resulting dataset is exported as:
+## Milestone 1
 
-tournament_upset_data.csv
+For Milestone 1, I selected my research question, discussed the project with my faculty advisor, downloaded and examined the datasets, and identified relevant background articles related to NCAA Tournament upset prediction.
 
-The current dataset contains 1,367 NCAA Tournament matchups from 2003 through 2025. Of those games, 392 are classified as upsets and 975 as non-upsets. The completed dataset contains no missing values.
+I also established the overall direction of the project and identified regular-season team statistics that could potentially help explain tournament upsets.
 
-Tools
-
-R and RStudio for data preparation, analysis, visualization, and modeling
-
-tidyverse for data manipulation
-
-GitHub for project documentation and version control
-
-Milestone 1 — Project Setup
-
-For Milestone 1, I selected the research question, discussed the project with my faculty advisor, downloaded and initially examined the datasets, and identified relevant background articles.
-
-I also identified the regular-season statistics that could potentially be useful for predicting tournament upsets.
-
-Milestone 1 video:
+**Milestone 1 Video:**  
 https://youtu.be/RUV-nK5dAqw
 
-Milestone 2 — Data Preparation
+## Milestone 2
 
-For Milestone 2, I focused on preparing the data needed for the actual analysis.
+For Milestone 2, I began the main data preparation process for the project.
 
-I first transformed the detailed regular-season game results into team-level observations and calculated season statistics for every team. These statistics include winning percentage, scoring margin, shooting percentages, rebounds, assists, turnovers, steals, and blocks.
+The first R script transforms the detailed regular-season results into a team-level format. Because the original NCAA dataset records statistics separately for the winning and losing teams, the data is reorganized so that every team receives its own observation for each game.
 
-I then prepared the NCAA Tournament results by adding each team's tournament seed and identifying the favorite and underdog in every matchup. Games are classified as upsets when the team with the larger numerical seed defeats the team with the smaller numerical seed.
+These game-level observations are then summarized to create season-level statistics for every team.
 
-Next, I joined the regular-season statistics to the tournament matchups. For each matchup, I calculated the difference between the underdog and favorite for each regular-season statistic. This creates a set of matchup-level predictors that can be used to investigate which differences are associated with a greater probability of an upset.
+The second script combines these regular-season statistics with NCAA Tournament results and tournament seeds. Each tournament matchup is organized into a favorite and an underdog based on seed.
 
-The final analysis dataset currently contains 1,367 tournament games from 2003 through 2025, with 392 upsets and 975 non-upsets. There are no missing values in the final dataset.
+An upset indicator is created where:
 
-Next Steps
+- `1` = the underdog won
+- `0` = the favorite won
 
-The next stage of the project will focus on exploratory data analysis. I plan to examine how the statistical differences vary between upsets and non-upsets, create visualizations, and investigate relationships between the potential predictors and upset outcomes.
+Predictor variables are then calculated using:
 
-After the exploratory analysis, I will begin developing the logistic regression model used to predict upset probability and evaluate which regular-season statistics are most useful.
+**Underdog Statistic - Favorite Statistic**
 
-Milestone 2 video:
+This allows the model to measure how the underdog compares with the favorite in different statistical categories.
+
+The prepared tournament dataset currently includes NCAA Tournament games from 2003 through 2025.
+
+The next stage of the project will involve exploratory data analysis to determine which statistical differences appear most strongly associated with tournament upsets. After this analysis, logistic regression models will be developed to estimate upset probabilities and evaluate which regular-season statistics provide the most predictive value.
+
+**Milestone 2 Video:**  
 
 
-References
+## Next Steps
 
-Dartmouth Sports Analytics: First-round upset indicators
+The next steps for the project include:
 
-Matt Worley: Predicting Upsets with Machine Learning
+- Add a strength-of-schedule measure for each team.
+- Explore differences between upset and non-upset games.
+- Create visualizations for important predictors.
+- Examine relationships between predictor variables.
+- Determine which predictors should be included in the model.
+- Build a logistic regression model for upset probability.
+- Compare model predictions with tournament seeds.
+- Evaluate predictive performance using later tournament seasons.
 
-Dutta, S., Jacobson, S. H., & Sauppe, J. J. (2017). Identifying NCAA tournament upsets using Balance Optimization Subset Selection. Journal of Quantitative Analysis in Sports, 13(2), 79–93.
+## References
 
-Author
+- Dartmouth Sports Analytics: First-round upset indicators
+- Matt Worley: Predicting Upsets with Machine Learning
+- Dutta, S., Jacobson, S. H., & Sauppe, J. J. (2017). *Identifying NCAA tournament upsets using Balance Optimization Subset Selection.*
 
-Albert Blair
-Mathematics and Data Science
-University of Wisconsin–River Falls
+## Author
+
+Albert Blair  
+Mathematics and Data Science  
+University of Wisconsin–River Falls  
 CIDS 488 — Senior Capstone, Fall 2026
