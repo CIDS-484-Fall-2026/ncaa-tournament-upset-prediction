@@ -1,89 +1,134 @@
-# Load tidyverse for importing, cleaning, joining, and manipulating data
+# ============================================================
+# NCAA Tournament Upset Prediction
+# Script 02: Create Tournament Matchup Dataset
+#
+# Purpose:
+# Combine tournament results, tournament seeds, and
+# regular-season team statistics.
+#
+# The final dataset contains one row per tournament matchup.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. LOAD PACKAGES
+# ------------------------------------------------------------
+
 library(tidyverse)
 
 
 # ------------------------------------------------------------
-# 1. IMPORT DATA
+# 2. IMPORT DATA
 # ------------------------------------------------------------
 
-# Import NCAA Tournament results
-# Each row represents one NCAA Tournament game
-tourney_results <- read_csv("data/MNCAATourneyCompactResults.csv")
+# NCAA Tournament game results
+tourney_results <- read_csv(
+  "data/MNCAATourneyCompactResults.csv"
+)
 
-# Import NCAA Tournament seeds
-# This contains the tournament seed assigned to each team
-tourney_seeds <- read_csv("data/MNCAATourneySeeds.csv")
+# NCAA Tournament seeds
+tourney_seeds <- read_csv(
+  "data/MNCAATourneySeeds.csv"
+)
 
-# Import team information
-# This allows TeamID values to be matched with actual team names
-teams <- read_csv("data/MTeams.csv")
+# Team names
+teams <- read_csv(
+  "data/MTeams.csv"
+)
 
-# Import the team-season statistics created in Script 01
-# Each row represents one team's regular-season performance
-# during one season
-team_seasons <- read_csv("data/team_season_statistics.csv")
-
+# Team-season statistics created in Script 01
+team_seasons <- read_csv(
+  "data/team_season_statistics.csv"
+)
 
 
 # ------------------------------------------------------------
-# 2. CLEAN TOURNAMENT SEEDS
+# 3. CLEAN TOURNAMENT SEEDS
 # ------------------------------------------------------------
 
-# Tournament seeds are stored as values such as W01, X12,
-# or W16a. Extract only the numeric portion of the seed.
+# Tournament seeds are stored as values such as:
 #
-# Examples:
-# W01  -> 1
-# X12  -> 12
-# W16a -> 16
+# W01
+# X12
+# W16a
+#
+# Extract only the numeric portion.
+
 tourney_seeds <- tourney_seeds %>%
   mutate(
-    SeedNum = as.numeric(str_extract(Seed, "\\d+"))
+    
+    SeedNum =
+      as.numeric(
+        str_extract(
+          Seed,
+          "\\d+"
+        )
+      )
+    
   )
 
 
-
 # ------------------------------------------------------------
-# 3. ADD SEEDS TO TOURNAMENT RESULTS
+# 4. ADD SEEDS TO TOURNAMENT RESULTS
 # ------------------------------------------------------------
 
-# Add the tournament seed of the winning team to each game
+# Add the winning team's seed.
+
 tournament_games <- tourney_results %>%
   left_join(
+    
     tourney_seeds %>%
-      select(Season, TeamID, SeedNum) %>%
+      select(
+        Season,
+        TeamID,
+        SeedNum
+      ) %>%
       rename(
         WTeamID = TeamID,
         WSeed = SeedNum
       ),
-    by = c("Season", "WTeamID")
+    
+    by = c(
+      "Season",
+      "WTeamID"
+    )
   )
 
 
-# Add the tournament seed of the losing team to each game
+# Add the losing team's seed.
+
 tournament_games <- tournament_games %>%
   left_join(
+    
     tourney_seeds %>%
-      select(Season, TeamID, SeedNum) %>%
+      select(
+        Season,
+        TeamID,
+        SeedNum
+      ) %>%
       rename(
         LTeamID = TeamID,
         LSeed = SeedNum
       ),
-    by = c("Season", "LTeamID")
+    
+    by = c(
+      "Season",
+      "LTeamID"
+    )
   )
 
 
-
 # ------------------------------------------------------------
-# 4. SELECT GAMES FOR THE ANALYSIS
+# 5. SELECT GAMES FOR THE ANALYSIS
 # ------------------------------------------------------------
 
-# Detailed regular-season statistics are available beginning
-# in 2003, so tournament games before 2003 cannot be used
-# for the statistical analysis.
+# Detailed regular-season statistics begin in 2003.
+#
+# Therefore, tournament games before 2003 are removed.
 #
 # Games where both teams have the same seed are also removed
 # because there is no clear favorite or underdog based on seed.
+
 tournament_games <- tournament_games %>%
   filter(
     Season >= 2003,
@@ -91,74 +136,105 @@ tournament_games <- tournament_games %>%
   )
 
 
-
 # ------------------------------------------------------------
-# 5. IDENTIFY THE FAVORITE AND UNDERDOG
+# 6. IDENTIFY FAVORITE AND UNDERDOG
 # ------------------------------------------------------------
 
-# The team with the smaller seed number is considered the favorite.
-# The team with the larger seed number is considered the underdog.
+# Smaller seed number = Favorite
+# Larger seed number = Underdog
 #
-# For example:
-# Seed 4 = Favorite
-# Seed 13 = Underdog
+# Example:
 #
-# These are determined independently of which team actually won.
+# #4 vs #13
+#
+# #4 = Favorite
+# #13 = Underdog
+
 tournament_games <- tournament_games %>%
   mutate(
-    FavoriteTeamID = if_else(WSeed < LSeed, WTeamID, LTeamID),
-    UnderdogTeamID = if_else(WSeed > LSeed, WTeamID, LTeamID),
     
-    FavoriteSeed = pmin(WSeed, LSeed),
-    UnderdogSeed = pmax(WSeed, LSeed)
+    FavoriteTeamID =
+      if_else(
+        WSeed < LSeed,
+        WTeamID,
+        LTeamID
+      ),
+    
+    UnderdogTeamID =
+      if_else(
+        WSeed > LSeed,
+        WTeamID,
+        LTeamID
+      ),
+    
+    FavoriteSeed =
+      pmin(
+        WSeed,
+        LSeed
+      ),
+    
+    UnderdogSeed =
+      pmax(
+        WSeed,
+        LSeed
+      )
+    
   )
 
 
-
 # ------------------------------------------------------------
-# 6. IDENTIFY UPSETS
+# 7. CREATE THE UPSET VARIABLE
 # ------------------------------------------------------------
 
-# Create the response variable for the project.
+# Upset = 1 when the underdog wins
+# Upset = 0 when the favorite wins
 #
-# Upset = 1 when the lower-seeded team wins
-# Upset = 0 when the higher-seeded team wins
-#
-# Because a larger seed number represents the underdog,
-# an upset occurs when WSeed is greater than LSeed.
-#
-# Also calculate the difference between the two teams' seeds.
+# Because larger seed numbers represent underdogs,
+# an upset occurs when WSeed > LSeed.
+
 tournament_games <- tournament_games %>%
   mutate(
-    Upset = if_else(WSeed > LSeed, 1, 0),
-    SeedDifference = UnderdogSeed - FavoriteSeed
+    
+    Upset =
+      if_else(
+        WSeed > LSeed,
+        1,
+        0
+      ),
+    
+    # Difference between tournament seeds
+    SeedDifference =
+      UnderdogSeed - FavoriteSeed
+    
   )
 
 
-
 # ------------------------------------------------------------
-# 7. ADD TEAM NAMES
+# 8. ADD TEAM NAMES
 # ------------------------------------------------------------
 
-# Create a lookup table for the favorite's team name
 favorite_names <- teams %>%
-  select(TeamID, TeamName) %>%
+  select(
+    TeamID,
+    TeamName
+  ) %>%
   rename(
     FavoriteTeamID = TeamID,
     FavoriteTeam = TeamName
   )
 
 
-# Create a lookup table for the underdog's team name
 underdog_names <- teams %>%
-  select(TeamID, TeamName) %>%
+  select(
+    TeamID,
+    TeamName
+  ) %>%
   rename(
     UnderdogTeamID = TeamID,
     UnderdogTeam = TeamName
   )
 
 
-# Join the team names onto each tournament matchup
 tournament_games <- tournament_games %>%
   left_join(
     favorite_names,
@@ -170,16 +246,10 @@ tournament_games <- tournament_games %>%
   )
 
 
-
 # ------------------------------------------------------------
-# 8. PREPARE FAVORITE REGULAR-SEASON STATISTICS
+# 9. PREPARE FAVORITE STATISTICS
 # ------------------------------------------------------------
 
-# Select the regular-season statistics that will be used
-# for the favorite in each tournament matchup.
-#
-# Variables are renamed with "Fav" so they can be distinguished
-# from the underdog's statistics after the datasets are joined.
 favorite_stats <- team_seasons %>%
   select(
     Season,
@@ -195,7 +265,8 @@ favorite_stats <- team_seasons %>%
     AvgAssists,
     AvgTurnovers,
     AvgSteals,
-    AvgBlocks
+    AvgBlocks,
+    SOS
   ) %>%
   rename(
     FavoriteTeamID = TeamID,
@@ -210,19 +281,15 @@ favorite_stats <- team_seasons %>%
     FavAvgAssists = AvgAssists,
     FavAvgTurnovers = AvgTurnovers,
     FavAvgSteals = AvgSteals,
-    FavAvgBlocks = AvgBlocks
+    FavAvgBlocks = AvgBlocks,
+    FavSOS = SOS
   )
 
 
-
 # ------------------------------------------------------------
-# 9. PREPARE UNDERDOG REGULAR-SEASON STATISTICS
+# 10. PREPARE UNDERDOG STATISTICS
 # ------------------------------------------------------------
 
-# Select the same regular-season statistics for the underdog.
-#
-# Variables are renamed with "Dog" so they can be distinguished
-# from the favorite's statistics.
 underdog_stats <- team_seasons %>%
   select(
     Season,
@@ -238,7 +305,8 @@ underdog_stats <- team_seasons %>%
     AvgAssists,
     AvgTurnovers,
     AvgSteals,
-    AvgBlocks
+    AvgBlocks,
+    SOS
   ) %>%
   rename(
     UnderdogTeamID = TeamID,
@@ -253,53 +321,53 @@ underdog_stats <- team_seasons %>%
     DogAvgAssists = AvgAssists,
     DogAvgTurnovers = AvgTurnovers,
     DogAvgSteals = AvgSteals,
-    DogAvgBlocks = AvgBlocks
+    DogAvgBlocks = AvgBlocks,
+    DogSOS = SOS
   )
 
 
-
 # ------------------------------------------------------------
-# 10. ADD REGULAR-SEASON STATISTICS TO EACH MATCHUP
+# 11. JOIN REGULAR-SEASON STATISTICS
 # ------------------------------------------------------------
 
-# Join the favorite's regular-season statistics to each
-# tournament game using Season and TeamID
+# Add the favorite's statistics.
+
 tournament_games <- tournament_games %>%
   left_join(
     favorite_stats,
-    by = c("Season", "FavoriteTeamID")
+    by = c(
+      "Season",
+      "FavoriteTeamID"
+    )
   )
 
 
-# Join the underdog's regular-season statistics to each
-# tournament game using Season and TeamID
+# Add the underdog's statistics.
+
 tournament_games <- tournament_games %>%
   left_join(
     underdog_stats,
-    by = c("Season", "UnderdogTeamID")
+    by = c(
+      "Season",
+      "UnderdogTeamID"
+    )
   )
 
 
-
 # ------------------------------------------------------------
-# 11. CALCULATE MATCHUP DIFFERENCES
+# 12. CALCULATE MATCHUP DIFFERENCES
 # ------------------------------------------------------------
 
-# Calculate the difference between the underdog and favorite
-# for each regular-season statistic.
+# Every difference is calculated as:
 #
-# All differences are calculated as:
+# UNDERDOG - FAVORITE
 #
-#       Underdog Statistic - Favorite Statistic
-#
-# This provides one matchup-level value for each statistic.
-#
-# A positive value means the underdog had a higher value
-# for that statistic during the regular season.
-#
-# A negative value means the favorite had a higher value.
+# Positive = underdog had the higher value
+# Negative = favorite had the higher value
+
 tournament_games <- tournament_games %>%
   mutate(
+    
     WinPctDifference =
       DogWinPct - FavWinPct,
     
@@ -334,86 +402,96 @@ tournament_games <- tournament_games %>%
       DogAvgSteals - FavAvgSteals,
     
     BlockDifference =
-      DogAvgBlocks - FavAvgBlocks
+      DogAvgBlocks - FavAvgBlocks,
+    
+    # Positive SOS difference means the underdog played
+    # the stronger regular-season schedule.
+    SOSDifference =
+      DogSOS - FavSOS
+    
   )
 
 
-
 # ------------------------------------------------------------
-# 12. CREATE THE FINAL ANALYSIS DATASET
+# 13. CREATE FINAL ANALYSIS DATASET
 # ------------------------------------------------------------
 
-# Keep the variables needed for the upset analysis.
-#
-# Each row in upset_data now represents one NCAA Tournament
-# matchup between a favorite and an underdog.
 upset_data <- tournament_games %>%
   select(
+    
     Season,
+    
     FavoriteTeam,
     UnderdogTeam,
+    
     FavoriteSeed,
     UnderdogSeed,
+    
     SeedDifference,
     
     WinPctDifference,
     AvgPointsDifference,
     AvgPointsAllowedDifference,
     PointMarginDifference,
+    
     FGPercentDifference,
     ThreePPercentDifference,
     FTPercentDifference,
+    
     ReboundDifference,
     AssistDifference,
     TurnoverDifference,
     StealDifference,
     BlockDifference,
     
+    SOSDifference,
+    
     Upset
   )
 
 
-
 # ------------------------------------------------------------
-# 13. CHECK THE FINAL DATASET
+# 14. CHECK FINAL DATASET
 # ------------------------------------------------------------
 
-# Display the number of tournament games classified as
-# non-upsets and upsets.
-#
-# 0 = Favorite won
-# 1 = Underdog won
+# Number of upsets and non-upsets
 table(upset_data$Upset)
 
 
-# Check every variable for missing values.
-# Ideally the statistical variables should no longer contain
-# missing values now that the analysis begins in 2003.
-colSums(is.na(upset_data))
+# Percentage of games that were upsets
+prop.table(
+  table(upset_data$Upset)
+)
 
 
-# Check the range of seasons included in the final dataset.
-# The first season should now be 2003.
-range(upset_data$Season)
+# Check missing values
+colSums(
+  is.na(upset_data)
+)
 
 
-# Display the number of rows and columns in the final dataset
-dim(upset_data)
+# Check season range
+range(
+  upset_data$Season
+)
 
 
-# Open the final dataset for visual inspection
-View(upset_data)
+# Check dataset dimensions
+dim(
+  upset_data
+)
 
+
+# View the final dataset
+View(
+  upset_data
+)
 
 
 # ------------------------------------------------------------
-# 14. EXPORT THE FINAL DATASET
+# 15. EXPORT FINAL DATASET
 # ------------------------------------------------------------
 
-# Save the completed tournament matchup dataset.
-#
-# This dataset will be used in the next stages of the project
-# for exploratory data analysis and predictive modeling.
 write_csv(
   upset_data,
   "data/tournament_upset_data.csv"
