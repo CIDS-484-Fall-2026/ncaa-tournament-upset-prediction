@@ -1,0 +1,2 @@
+Comparison,LogLossImprovement,Lower95,Upper95,ShareOfResamplesImproved
+Full vs Seed Only,-0.011123755016170911,-0.039600179836742515,0.016898904742680056,0.219
